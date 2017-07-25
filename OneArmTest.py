@@ -320,6 +320,8 @@ class OneArm(Frame):
             # print xlFilePath
             if '.' in xlFilePath:
                 workbook = xlsxwriter.Workbook(xlFilePath)
+            elif xlFilePath is '':
+                return
             else: 
                 workbook = xlsxwriter.Workbook(xlFilePath+".xlsx")
 
@@ -468,6 +470,7 @@ class OneArm(Frame):
     def Index(self):
         self.parent.withdraw()
         window = Toplevel()
+        window.iconbitmap('favicon.ico')
         window.protocol("WM_DELETE_WINDOW",lambda : self.OnClosing(window))
         self.TreeView(window)
 
@@ -564,6 +567,14 @@ class OneArm(Frame):
             ResultSet = Cursor.fetchall()
             app.WritingScript(ResultSet, "Bottom")
                
+
+            Cursor.execute("SELECT name FROM TwoArm WHERE TwoArmId = ?", Value)
+            ResultSet = Cursor.fetchall()
+
+            for row in ResultSet:
+                app.name = row[0]          
+            
+
             app.setName()
             # app.setKVal()
             app.setDesign()

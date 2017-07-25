@@ -43,6 +43,8 @@ class TwoArm(Frame):
     Design = ""
     name = ""
     NameLabel = None
+    DesignTop = []
+    DesignBottom = []
 
     WorkingDirectory = os.path.dirname(os.path.realpath(__file__))
     DataDirectory = WorkingDirectory + "/Data/"
@@ -143,6 +145,8 @@ class TwoArm(Frame):
 
         self.Design = ""
         self.name = ""
+        self.DesignTop = []
+        self.DesignBottom = []
 
 
         self.initUI()
@@ -252,6 +256,9 @@ class TwoArm(Frame):
         # self.KVal.config(font=("Helvetica, 15"))
         # self.KVal.grid(row=3000, column=0, columnspan=3, padx=20, pady=15)
 
+    def setMaxDistance(self):
+        self.MaxDistanceTop = self.SignalDistanceTop[len(self.SignalDistanceTop)-1]
+        self.MaxDistanceBottom = self.SignalDistanceBottom[len(self.SignalDistanceBottom)-1]
 
 
 
@@ -262,6 +269,8 @@ class TwoArm(Frame):
         # self.DesignLabel = Label(self.frame, text=LabelText.get())
         # self.DesignLabel.config(font=("Helvetica, 15"))
         # self.DesignLabel.grid(row=3000, column=7, columnspan=2, padx=20, pady=15)
+        self.DesignTop = self.DesignChoice(self.KTop, self.MaxDistanceTop)
+        self.DesignBottom = self.DesignChoice(self.KBottom, self.MaxDistanceBottom)
         self.Design = self.FinalDesignChoice()
 
 
@@ -278,14 +287,14 @@ class TwoArm(Frame):
         MsgBottom = "K of Arm B : "+str(int(math.ceil(self.KBottom)))
         
         DesignMessageTop = "Use Design(Arm A) : "
-        DesignTop = self.DesignChoice(self.KTop, self.MaxDistanceTop)
+        self.DesignTop = self.DesignChoice(self.KTop, self.MaxDistanceTop)
         # if DesignTop is None:
         #     DesignTop[0] = 0
-        FinalDesignMessageTop = DesignMessageTop + str(DesignTop[0])
+        FinalDesignMessageTop = DesignMessageTop + str(self.DesignTop[0])
         
         DesignMessageBottom = "Use Design(Arm B) : "
-        DesignBottom = self.DesignChoice(self.KBottom, self.MaxDistanceBottom)
-        FinalDesignMessageBottom = DesignMessageBottom + str(DesignBottom[0])
+        self.DesignBottom = self.DesignChoice(self.KBottom, self.MaxDistanceBottom)
+        FinalDesignMessageBottom = DesignMessageBottom + str(self.DesignBottom[0])
 
         label = Label(frame, text=MsgTop)
         label.grid(row=1, column=3, columnspan=15, pady=15, padx=15)
@@ -340,11 +349,11 @@ class TwoArm(Frame):
         for i in range(len(self.TwoWayPoleTable)):
             if self.TwoWayPoleTable[i][0] == '':
                 self.TwoWayPoleTable[i][0] = 0
-            if int(self.TwoWayPoleTable[i][0]) == int(DesignTop[0]):
+            if int(self.TwoWayPoleTable[i][0]) == int(self.DesignTop[0]):
                 for j in range(len(self.TwoWayPoleTable[i])):
                     if self.TwoWayPoleTable[0][j] == '':
                         self.TwoWayPoleTable[0][j] = 0
-                    if int(self.TwoWayPoleTable[0][j]) == int(DesignBottom[0]):
+                    if int(self.TwoWayPoleTable[0][j]) == int(self.DesignBottom[0]):
                         CalculatedResult = self.TwoWayPoleTable[i][j]
                         break
 
@@ -393,8 +402,11 @@ class TwoArm(Frame):
 
         try:
             xlFilePath = filedialog.asksaveasfilename(initialdir=self.DataDirectory, title="Select File", filetypes=(("Excel Files", "*.xlsx"),))
-            if '.' in xlFilePath:
+            if xlFilePath is '':
+                return
+            elif '.' in xlFilePath:
                 workbook = xlsxwriter.Workbook(xlFilePath)
+            
             else:
                 workbook = xlsxwriter.Workbook(xlFilePath+".xlsx")
 
@@ -430,7 +442,7 @@ class TwoArm(Frame):
             Heading.append("Area Moment Design Factor")
 
 
-            worksheet.merge_range(5, 0, 5, 5, "Arm A", MergeUnderline)
+            worksheet.merge_range(5, 0, 5, 3, "Arm A", MergeUnderline)
             
             import time
             import datetime
@@ -483,9 +495,9 @@ class TwoArm(Frame):
             # worksheet.write(cell, '=SUM(D7:D13)', BorderFormat)
 
 
-            CurrentRow += 2
+            CurrentRow += 3
 
-            worksheet.merge_range(CurrentRow, 0, CurrentRow, 5, "Arm B", MergeUnderline)
+            worksheet.merge_range(CurrentRow, 0, CurrentRow, 3, "Arm B", MergeUnderline)
             CurrentRow += 2
 
             worksheet.write_string(CurrentRow, 0, Heading[0], WrapText)
@@ -517,17 +529,18 @@ class TwoArm(Frame):
             worksheet.write_string(CurrentRow, 0, "K", MergeFormat)
             worksheet.write_number(CurrentRow, 1, float(self.KBottom), BorderFormat)
 
-            CurrentRow += 2
+            CurrentRow += 3
 
             worksheet.write_string(CurrentRow, 0, "Use Design", MergeFormat)
-            worksheet.write_number(CurrentRow, 1, float(self.Design), BorderFormat)
+            worksheet.write_string(CurrentRow, 1, self.Design, MergeFormat)
 
             # from xlsxwriter.utility import xl_rowcol_to_cell
             # cell = xl_rowcol_to_cell(CurrentRow, 1)
 
             # worksheet.write(cell, '=SUM(D7:D13)', BorderFormat)
 
-
+            workbook.close()
+            MessageBox.showinfo("Success", "The data has been successfully written to the File.")
             # CurrentRow += 1
 
         except IOError, e:
@@ -585,6 +598,20 @@ class TwoArm(Frame):
         self.BottomCanvas.configure(scrollregion=self.BottomCanvas.bbox("all"))
 
 
+    def OnClosing(self, window):
+        """ Some yes no inputs regarding exit or Previous step """
+        dialog = MessageBox.askyesno("How To Proceed", "Do you want to go back to Two Arm?", parent=self.parent)
+        if dialog:
+            window.destroy()
+            self.parent.deiconify()
+            return
+        else:
+            Sure = MessageBox.askokcancel("Quit", "The Application will be closed", icon='warning')
+            if Sure:
+                window.destroy()
+                self.parent.quit()
+
+
     def Menu(self):
         self.menubar = Menu(self)
         menu = Menu(self.menubar, tearoff=0)
@@ -605,6 +632,8 @@ class TwoArm(Frame):
     def Index(self):
         self.parent.withdraw()
         window = Toplevel()
+        window.iconbitmap('favicon.ico')
+        window.protocol("WM_DELETE_WINDOW",lambda : self.OnClosing(window))
         self.TreeView(window)
 
 
@@ -716,12 +745,18 @@ class TwoArm(Frame):
             ResultSet = Cursor.fetchall()
             app.WritingScript(ResultSet, "Bottom")
             
+            Cursor.execute("SELECT name FROM TwoArm WHERE TwoArmId = ?", Value)
+            ResultSet = Cursor.fetchall()
+
+            for row in ResultSet:
+                app.name = row[0]          
             
             
             
             app.setName()
             app.setKVal()
             app.setDesign()
+            app.setMaxDistance()
 
 
     def SaveToDatabase(self):
