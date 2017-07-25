@@ -188,16 +188,17 @@ class FinalSoftware(Frame):
         """ Some yes no inputs regarding exit or Previous step """
         # if self.count == 0:
         #     self.count = 1
-        dialog = MessageBox.askyesno("How To Proceed", "Do you want to go back to Selection Method?", parent=window)
-        if dialog:
-            window.destroy()
-            self.parent.deiconify()
-            return
-        else:
-            Sure = MessageBox.askokcancel("Quit", "The Application will be closed", icon='warning')
-            if Sure:
-                self.parent.destroy()
-            # self.count = 0
+        # dialog = MessageBox.askyesno("How To Proceed", "Do you want to go back?", parent=window)
+        # if dialog:
+        #     window.destroy()
+        #     self.parent.deiconify()
+        #     return
+        # else:
+        Sure = MessageBox.askokcancel("Quit", "The Application will be closed", icon='warning')
+        if Sure:
+            self.parent.destroy()
+            self.parent.quit()
+        # self.count = 0
 
     def onDoubleClick(self, event):
         item = self.tree.selection()[0]
